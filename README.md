@@ -28,25 +28,28 @@
 - **협동 레이드**: 팀을 이루어 해결하는 시나리오 기반의 고난도 레이드
 - **실시간 채팅**: 마을 내 아바타 간 실시간 소통
 
-## 🚀 프로젝트 실행 방법
 
-### 1. 필수 설치 요소
+## 🚀 프로젝트 시작하기
 
-- [Node.js](https://nodejs.org/ko) (v18 이상 권장)
-- [PostgreSQL](https://www.postgresql.org/download/)
+### 1. 필수 설치 프로그램
+
+- [Node.js](https://nodejs.org/ko/) (버전 18 이상 권장)
+- [PostgreSQL](https://www.postgresql.org/)
 
 ### 2. 프로젝트 설정
 
-1.  이 GitHub 리포지토리를 클론(clone)합니다.
+1.  GitHub에서 프로젝트를 클론합니다.
     ```bash
-    git clone [https://github.com/jnu-pcode/pcode_website.git](https://github.com/jnu-pcode/pcode_website.git)
-    cd pcode_website
+    git clone [프로젝트_URL]
+    cd pcode-web
     ```
-2.  필요한 모듈들을 설치합니다.
+
+2.  필요한 Node.js 패키지를 설치합니다.
     ```bash
     npm install
     ```
-3.  `.env` 파일을 생성하고 데이터베이스 정보를 입력합니다.
+
+3.  `.env` 파일을 생성하고 데이터베이스 및 JWT 정보를 입력합니다.
     ```
     # .env
     
@@ -57,15 +60,46 @@
     DB_NAME=postgres
     DB_PASSWORD=당신의_PostgreSQL_비밀번호
     DB_PORT=5432
+    
+    JWT_SECRET=your_super_secret_jwt_key
     ```
-    **주의**: 이 파일은 절대 외부에 노출되어서는 안 됩니다.
 
-### 3. 프로젝트 실행
-
-- 터미널에서 다음 명령어를 입력하여 서버를 실행합니다.
+4.  서버를 실행합니다. 서버가 자동으로 데이터베이스 테이블을 생성합니다.
     ```bash
     node server.js
     ```
-- 서버가 정상적으로 실행되면 터미널에 `Successfully connected to the database!` 메시지가 출력됩니다.
 
----
+## 💻 API 엔드포인트
+
+### 1. 회원가입 (Register)
+
+- **URL**: `POST /api/auth/register`
+- **설명**: 새로운 사용자를 등록합니다.
+- **요청 본문 (JSON)**:
+    ```json
+    {
+      "username": "사용자_아이디",
+      "password": "사용자_비밀번호",
+      "auth_code": "pcode1234"
+    }
+    ```
+- **예시 (curl)**:
+    ```bash
+    curl -X POST http://localhost:5000/api/auth/register -H "Content-Type: application/json" -d "{\"username\":\"testuser\",\"password\":\"testpassword123\",\"auth_code\":\"pcode1234\"}"
+    ```
+
+### 2. 로그인 (Login)
+
+- **URL**: `POST /api/auth/login`
+- **설명**: 사용자를 인증하고 JWT 토큰을 발급합니다.
+- **요청 본문 (JSON)**:
+    ```json
+    {
+      "username": "사용자_아이디",
+      "password": "사용자_비밀번호"
+    }
+    ```
+- **예시 (curl)**:
+    ```bash
+    curl -X POST http://localhost:5000/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"testuser\",\"password\":\"testpassword123\"}"
+    ```

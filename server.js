@@ -1,43 +1,46 @@
-// server.js
+/**
+ * @file server.js
+ * @description p.code의 숲 프로젝트의 메인 서버 파일입니다.
+ * * **변경 이력**
+ * - 2025-07-14 01:00: 초기 서버 설정 (express, dotenv, pg 모듈 import)
+ * - 2025-07-14 01:10: db 연결 테스트 로직 추가
+ * - 2025-07-14 01:15: API 라우트 (`/api/auth/register`) 연결
+ * - 2025-07-14 01:24: 테이블 생성 로직을 db 모듈에서 가져와 서버 시작 전에 실행하도록 수정
+ * - 2025-07-14 01:32: 단계별 변경 기록을 주석으로 추가
+ * - 2025-07-14 01:36: public 폴더를 정적 파일 서비스 경로로 추가
+ */
 
-// 필요한 모듈들을 불러옵니다.
 const express = require('express');
-const { Pool } = require('pg');
 const dotenv = require('dotenv');
+const db = require('./src/db');
+const authController = require('./src/features/authentication/auth.controller');
 
-// .env 파일의 환경 변수를 로드합니다.
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// JSON 요청 본문을 파싱하기 위한 미들웨어
 app.use(express.json());
+app.use(express.static('public')); // public 폴더를 정적 파일 서비스 경로로 설정
 
-// PostgreSQL DB 연결을 위한 설정
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
+// API 라우트
+app.post('/api/auth/register', authController.register); // 회원가입
+app.post('/api/auth/login', authController.login); // 로그인
+
+// 서버 시작 전 테이블 생성
+db.createTables()
+  .then(() => {
+    console.log('Database tables are ready.');
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to create database tables:', err);
+    process.exit(1); // 테이블 생성 실패 시 서버 종료
+  });
 
 // DB 연결 테스트
-pool.connect((err, client, release) => {
-  if (err) {
-    return console.error('Error acquiring client', err.stack);
-  }
-  console.log('Successfully connected to the database!');
-  release();
-});
-
-// 기본 라우트: 서버가 잘 작동하는지 확인하기 위함입니다.
-app.get('/', (req, res) => {
-  res.send('Welcome to the p.code Village Server!');
-});
-
-// 서버 시작
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+db.query('SELECT NOW()')
+  .then(res => console.log('Successfully connected to the database!'))
+  .catch(err => console.error('Error connecting to the database', err.stack));
