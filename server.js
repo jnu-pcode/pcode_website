@@ -9,10 +9,17 @@
  * - 2025-07-14 01:32: 단계별 변경 기록을 주석으로 추가
  * - 2025-07-14 01:36: public 폴더를 정적 파일 서비스 경로로 추가
  * - 2025-07-14 13:49: 워게임 컨트롤러 추가
+ * - 2025-07-14 16:05: 모든 라우트를 통합하고 경로를 재정비
+ * - 2025-07-14 20:58: 모든 라우트, 미들웨어, 유틸리티를 통합한 최종본
  */
-
 const express = require('express');
 const dotenv = require('dotenv');
+const path = require('path');
+const jwt = require('jsonwebtoken');
+const multer = require('multer');
+// 파일 업로드 설정을 함수로 분리하여 재사용 가능하게 함
+const getUploader = (destPath) => multer({ dest: destPath });
+
 const db = require('./src/db');
 const authController = require('./src/features/authentication/auth.controller');
 const wargameController = require('./src/features/wargame/wargame.controller');
@@ -21,27 +28,56 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 app.use(express.json());
-app.use(express.static('public')); // public 폴더를 정적 파일 서비스 경로로 설정
+
+// public 폴더를 정적 파일 서비스 경로로 설정
+app.use(express.static('public'));
+
+// JWT 인증 미들웨어
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) {
+      return res.status(401).json({ message: '인증 토큰이 필요합니다.' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) {
+          return res.status(403).json({ message: '유효하지 않은 토큰입니다.' });
+      }
+      req.user = user;
+      next();
+  });
+};
 
 // API 라우트
-app.post('/api/auth/register', authController.register); // 회원가입
-app.post('/api/auth/login', authController.login); // 로그인
-// 워게임 API 라우트
-app.get('/api/wargames', wargameController.getProblems);
-app.post('/api/wargames/:problem_id/start', wargameController.startProblem);
-app.post('/api/wargames/:problem_id/submit', wargameController.submitFlag); // Flag 제출 라우트 추가
+app.post('/api/auth/register', authController.register);
+app.post('/api/auth/login', authController.login);
+
+// 워게임 관련 API에만 인증 미들웨어 적용
+app.get('/api/wargames', authenticateToken, wargameController.getProblems);
+app.post('/api/wargames/:problem_id/start', authenticateToken, wargameController.startProblem);
+app.post('/api/wargames/:problem_id/submit', authenticateToken, wargameController.submitFlag);
+app.post('/api/wargames/stop/:containerId', authenticateToken, wargameController.stopProblem);
+app.post('/api/wargames/create', getUploader('docker-challenges/').single('dockerfile'), wargameController.createProblem);
 
 
-// 루트 URL로 접속하면 login.html로 리다이렉트
+//app.post('/api/users/house/upload', getUploader('user-houses/').single('htmlfile'), userHouseController.uploadHtml);
+
+// 페이지 라우트
 app.get('/', (req, res) => {
-  res.redirect('/login.html');
+    res.redirect('/login.html');
 });
 
-// 새로운 워게임 페이지 라우트
 app.get('/wargame.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/wargame.html'));
+    res.sendFile(path.join(__dirname, 'public/wargame.html'));
+});
+
+app.get('/wargame/create.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/wargame/create.html'));
 });
 
 // 서버 시작 전 테이블 생성
@@ -54,7 +90,7 @@ db.createTables()
   })
   .catch(err => {
     console.error('Failed to create database tables:', err);
-    process.exit(1); // 테이블 생성 실패 시 서버 종료
+    process.exit(1);
   });
 
 // DB 연결 테스트

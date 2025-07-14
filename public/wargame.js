@@ -1,8 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
     const problemsList = document.getElementById('problems');
     const categoryLinks = document.querySelectorAll('.category-list a');
-    const difficultyLinks = document.querySelectorAll('.difficulty-list a'); // 난이도 링크 선택
+    const difficultyLinks = document.querySelectorAll('.difficulty-list a');
 
+    // 모든 fetch 요청에 JWT 토큰을 자동으로 추가하는 함수
+    const authorizedFetch = async (url, options = {}) => {
+        const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...options.headers
+        };
+
+        const response = await fetch(url, { ...options, headers });
+        
+        if (response.status === 401 || response.status === 403) {
+            alert('인증이 만료되었습니다. 다시 로그인해 주세요.');
+            window.location.href = '/login.html';
+            return;
+        }
+
+        return response;
+    };
     let allProblems = [];
 
     const fetchProblems = async (filters = {}) => {
@@ -17,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const url = `/api/wargames?${params.toString()}`;
             
-            const response = await fetch(url);
+            const response = await authorizedFetch(url);
             const data = await response.json();
             
             if (!response.ok) {
@@ -43,23 +62,147 @@ document.addEventListener('DOMContentLoaded', () => {
         problems.forEach(problem => {
             const li = document.createElement('li');
             li.innerHTML = `
-                <span>${problem.title} (난이도: ${problem.difficulty})</span>
-                <button class="start-btn" data-id="${problem.id}">문제 시작</button>
+                <span class="problem-info">
+                    <span>${problem.title} (난이도: ${problem.difficulty})</span>
+                    ${problem.is_solved ? ' <span class="solved-badge">해결 완료</span>' : ''}
+                </span>
+                <div class="button-group">
+                    <button class="start-btn" data-id="${problem.id}">문제 시작</button>
+                </div>
             `;
-            
-            if (problem.isSolved) {
-                li.innerHTML += ' <span class="solved-badge">해결 완료</span>';
-            }
             
             problemsList.appendChild(li);
         });
     };
 
+    const startProblem = async (problemId, button) => {
+        try {
+            button.disabled = true;
+            button.textContent = '실행 중...';
+
+            const response = await authorizedFetch(`/api/wargames/${problemId}/start`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                throw new Error('문제 시작 실패');
+            }
+
+            const data = await response.json();
+            
+            window.open(`http://${data.host}:${data.port}`, '_blank');
+
+            button.textContent = '문제 종료';
+            button.classList.remove('start-btn');
+            button.classList.add('stop-btn');
+            button.dataset.containerId = data.container_id;
+            button.disabled = false;
+
+            const listItem = button.closest('li');
+            listItem.innerHTML += `
+                <div class="flag-submit-form">
+                    <input type="text" placeholder="여기에 Flag를 입력하세요" data-problem-id="${problemId}">
+                    <button class="submit-btn">제출</button>
+                </div>
+            `;
+            
+        } catch (error) {
+            alert('문제 시작에 실패했습니다. 서버 로그를 확인하세요.');
+            console.error('Error:', error);
+            button.textContent = '문제 시작';
+            button.disabled = false;
+        }
+    };
+    
+    const stopProblem = async (containerId, button) => {
+        try {
+            button.disabled = true;
+            button.textContent = '종료 중...';
+
+            const response = await authorizedFetch(`/api/wargames/stop/${containerId}`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                throw new Error('문제 종료 실패');
+            }
+
+            alert('문제가 성공적으로 종료되었습니다.');
+            
+            button.textContent = '문제 시작';
+            button.disabled = false;
+            button.classList.add('start-btn');
+            button.classList.remove('stop-btn');
+
+            const listItem = button.closest('li');
+            const form = listItem.querySelector('.flag-submit-form');
+            if (form) {
+                form.remove();
+            }
+
+        } catch (error) {
+            alert('문제 종료에 실패했습니다. 서버 로그를 확인하세요.');
+            console.error('Error:', error);
+            button.textContent = '문제 종료';
+            button.disabled = false;
+        }
+    };
+    
+    const submitFlag = async (problemId, flag, button) => {
+        try {
+            button.disabled = true;
+            button.textContent = '제출 중...';
+
+            const response = await authorizedFetch(`/api/wargames/${problemId}/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ flag: flag })
+            });
+            
+            const data = await response.json();
+            alert(data.message);
+            
+            button.disabled = false;
+            button.textContent = '제출';
+
+            if (response.ok) {
+                const startButton = button.closest('li').querySelector('.stop-btn');
+                if (startButton) {
+                    stopProblem(startButton.dataset.containerId, startButton);
+                }
+                window.location.reload();
+            }
+
+        } catch (error) {
+            alert('Flag 제출에 실패했습니다.');
+            console.error('Error:', error);
+            button.disabled = false;
+            button.textContent = '제출';
+        }
+    };
+    
+
+    problemsList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('start-btn')) {
+            const problemId = e.target.dataset.id;
+            startProblem(problemId, e.target);
+        } else if (e.target.classList.contains('stop-btn')) {
+            const containerId = e.target.dataset.containerId;
+            stopProblem(containerId, e.target);
+        } else if (e.target.classList.contains('submit-btn')) {
+            const input = e.target.closest('div').querySelector('input');
+            const problemId = input.dataset.problemId;
+            submitFlag(problemId, input.value, e.target);
+        }
+    });
+
     categoryLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const category = e.target.dataset.category;
-            fetchProblems({ category: category, difficulty: getActiveDifficulty() });
+            fetchProblems({ category: category });
         });
     });
 
@@ -67,19 +210,9 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const difficulty = e.target.dataset.difficulty;
-            fetchProblems({ category: getActiveCategory(), difficulty: difficulty });
+            fetchProblems({ difficulty: difficulty });
         });
     });
-
-    const getActiveCategory = () => {
-        const activeLink = document.querySelector('.category-list a[data-category]');
-        return activeLink ? activeLink.dataset.category : null;
-    };
-
-    const getActiveDifficulty = () => {
-        const activeLink = document.querySelector('.difficulty-list a[data-difficulty]');
-        return activeLink ? activeLink.dataset.difficulty : null;
-    };
 
     fetchProblems();
 });

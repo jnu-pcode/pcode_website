@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>문제 등록</title>
+    <link rel="stylesheet" href="create.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>문제 등록</h1>
+            <a href="/wargame.html" class="back-link">문제 목록으로 돌아가기</a>
+        </header>
+        <main>
+            <form id="create-form">
+                <div class="form-group">
+                    <label for="title">문제 제목</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">문제 설명</label>
+                    <textarea id="description" name="description" rows="5" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="difficulty">난이도</label>
+                    <input type="number" id="difficulty" name="difficulty" min="1" max="5" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">카테고리</label>
+                    <select id="category" name="category" required>
+                        <option value="web">Web Hacking</option>
+                        <option value="reversing">Reversing</option>
+                        <option value="pwnable">Pwnable</option>
+                        <option value="crypto">Cryptography</option>
+                        <option value="misc">Misc</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="flag">정답 Flag</label>
+                    <input type="text" id="flag" name="flag" required>
+                </div>
+                <div class="form-group">
+                    <label for="dockerfile">문제 파일 (ZIP)</label>
+                    <input type="file" id="dockerfile" name="dockerfile" accept=".zip" required>
+                </div>
+                <button type="submit">문제 등록</button>
+            </form>
+            <p id="message"></p>
+        </main>
+    </div>
+    <script src="create.js"></script>
+</body>
+</html>
