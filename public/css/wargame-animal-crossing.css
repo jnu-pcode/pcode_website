@@ -1,0 +1,199 @@
+body {
+    font-family: 'Avenir', 'Helvetica', 'Arial', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+:root {
+    /* 라이트 모드 변수 */
+    --background-color: #f7f3e8;
+    --text-color: #4a4a4a;
+    --container-bg: #fffaf0;
+    --container-border: #a6e3a6;
+    --container-shadow: rgba(0, 0, 0, 0.1);
+    --header-border: #a6e3a6;
+    --link-color: #5d9e5d;
+    --link-hover-bg: #5d9e5d;
+    --link-hover-color: white;
+    --problem-bg: #f5f5dc;
+    --problem-border: #5d9e5d;
+    --button-bg: #7b9c6f;
+    --button-hover-bg: #5d7e52;
+    --problem-text-color: #4a4a4a; /* <-- 추가 */
+}
+
+body.dark-mode {
+    /* 다크 모드 변수 */
+    --background-color: #121212;
+    --text-color: #00ff00;
+    --container-bg: #1e1e1e;
+    --container-border: #00ff00;
+    --container-shadow: rgba(0, 255, 0, 0.5);
+    --header-border: #00ff00;
+    --link-color: #00aaff;
+    --link-hover-bg: #00ff00;
+    --link-hover-color: #121212;
+    --problem-bg: #2b2b2b;
+    --problem-border: #00aaff;
+    --button-bg: #00aaff;
+    --button-hover-bg: #0088cc;
+    --problem-text-color: #f0f0f0; /* <-- 추가 */
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: var(--container-bg);
+    padding: 30px;
+    border: 2px solid var(--container-border);
+    border-radius: 20px;
+    box-shadow: 0 4px 12px var(--container-shadow);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+header {
+    text-align: center;
+    border-bottom: 2px solid var(--header-border);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.header-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+h1 {
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--text-color);
+    text-shadow: 0 0 5px var(--container-shadow);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+h3 {
+    text-transform: uppercase;
+    color: var(--text-color);
+    text-shadow: 0 0 5px var(--container-shadow);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--link-color);
+    text-decoration: none;
+    font-size: 0.9em;
+    margin-top: 5px;
+    transition: color 0.3s ease;
+}
+
+.category-list h3, .difficulty-list h3 {
+    text-align: center;
+    border-bottom: 1px solid var(--header-border);
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.category-list ul, .difficulty-list ul {
+    list-style-type: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    justify-items: center;
+}
+
+.category-list li, .difficulty-list li {
+    width: 100%;
+}
+
+.category-list li a, .difficulty-list li a {
+    text-decoration: none;
+    color: var(--link-color);
+    background-color: var(--problem-bg);
+    padding: 15px 10px;
+    border: 2px solid var(--header-border);
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    display: block;
+    width: auto;
+    text-align: center;
+}
+
+.category-list li a:hover, .difficulty-list li a:hover {
+    background-color: var(--link-hover-bg);
+    color: var(--link-hover-color);
+}
+
+.problem-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.problem-list li {
+    background-color: var(--problem-bg);
+    padding: 15px;
+    border-left: 3px solid var(--problem-border);
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px var(--container-shadow);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.start-btn {
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.start-btn:hover {
+    background-color: var(--button-hover-bg);
+}
+
+.solved-badge {
+    background-color: var(--link-hover-bg);
+    color: var(--link-hover-color);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.back-link, .theme-toggle-btn {
+    display: inline-block;
+    color: var(--link-color);
+    text-decoration: none;
+    font-size: 0.9em;
+    margin-top: 5px;
+    transition: color 0.3s ease;
+}
+
+.button-style {
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    width: auto;
+}
+
+.button-style:hover {
+    background-color: var(--button-hover-bg);
+}

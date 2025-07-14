@@ -8,12 +8,14 @@
  * - 2025-07-14 01:24: 테이블 생성 로직을 db 모듈에서 가져와 서버 시작 전에 실행하도록 수정
  * - 2025-07-14 01:32: 단계별 변경 기록을 주석으로 추가
  * - 2025-07-14 01:36: public 폴더를 정적 파일 서비스 경로로 추가
+ * - 2025-07-14 13:49: 워게임 컨트롤러 추가
  */
 
 const express = require('express');
 const dotenv = require('dotenv');
 const db = require('./src/db');
 const authController = require('./src/features/authentication/auth.controller');
+const wargameController = require('./src/features/wargame/wargame.controller');
 
 dotenv.config();
 
@@ -26,6 +28,21 @@ app.use(express.static('public')); // public 폴더를 정적 파일 서비스 �
 // API 라우트
 app.post('/api/auth/register', authController.register); // 회원가입
 app.post('/api/auth/login', authController.login); // 로그인
+// 워게임 API 라우트
+app.get('/api/wargames', wargameController.getProblems);
+app.post('/api/wargames/:problem_id/start', wargameController.startProblem);
+app.post('/api/wargames/:problem_id/submit', wargameController.submitFlag); // Flag 제출 라우트 추가
+
+
+// 루트 URL로 접속하면 login.html로 리다이렉트
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
+// 새로운 워게임 페이지 라우트
+app.get('/wargame.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/wargame.html'));
+});
 
 // 서버 시작 전 테이블 생성
 db.createTables()

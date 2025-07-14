@@ -1,15 +1,32 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>p.code의 숲</title>
-    <style>
-        body { margin: 0; overflow: hidden; background-color: #333; }
-        canvas { display: block; margin: auto; border: 1px solid #555; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>p.code의 숲</title>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #333; }
+    canvas { display: block; margin: auto; border: 1px solid #555; }
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <script type="module" src="map.js"></script> </body>
+  <canvas id="gameCanvas"></canvas>
+
+<!-- index.html에 있는 hintBar 스타일을 이렇게 수정 -->
+    <div id="hintBar" style="
+        position: absolute;
+        display: none;
+        padding: 6px 12px;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        border-radius: 8px;
+        font-size: 14px;
+        font-family: sans-serif;
+        pointer-events: none;
+        z-index: 20;
+    "></div>
+
+
+  <script type="module" src="map.js"></script>
+</body>
 </html>

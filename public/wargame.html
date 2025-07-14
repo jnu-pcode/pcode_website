@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>워게임 센터</title>
+    <link rel="stylesheet" href="/css/wargame-animal-crossing.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>워게임 센터</h1>
+            <div class="header-buttons">
+                <a href="/map.html" class="back-link button-style">&lt;-- 마을로 돌아가기</a>
+                <button id="theme-toggle" class="button-style">다크 모드</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="category-list">
+                <h3>카테고리:</h3>
+                <ul>
+                    <li><a href="#" data-category="all">전체</a></li>
+                    <li><a href="#" data-category="web">Web Hacking</a></li>
+                    <li><a href="#" data-category="reversing">Reversing</a></li>
+                    <li><a href="#" data-category="pwnable">Pwnable</a></li>
+                    <li><a href="#" data-category="crypto">Cryptography</a></li>
+                    <li><a href="#" data-category="misc">Misc</a></li>
+                </ul>
+            </div>
+
+            <div class="difficulty-list">
+                <h3>난이도:</h3>
+                <ul>
+                    <li><a href="#" data-difficulty="all">전체</a></li>
+                    <li><a href="#" data-difficulty="1">1</a></li>
+                    <li><a href="#" data-difficulty="2">2</a></li>
+                    <li><a href="#" data-difficulty="3">3</a></li>
+                    <li><a href="#" data-difficulty="4">4</a></li>
+                    <li><a href="#" data-difficulty="5">5</a></li>
+                </ul>
+            </div>
+
+            <div class="problem-list">
+                <h3>문제 목록:</h3>
+                <ul id="problems">
+                    <li><span class="loading">문제 목록을 불러오는 중...</span></li>
+                </ul>
+            </div>
+        </main>
+    </div>
+    <script src="wargame.js"></script>
+    <script src="theme-toggle.js"></script>
+</body>
+</html>

@@ -23,21 +23,59 @@ const pool = new Pool({
 
 async function createTables() {
   const createUsersTableQuery = `
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      username VARCHAR(255) UNIQUE NOT NULL,
-      password_hash VARCHAR(255) NOT NULL,
-      is_member BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMP NOT NULL
-    );
+      CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          username VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          is_member BOOLEAN NOT NULL DEFAULT FALSE,
+          created_at TIMESTAMP NOT NULL
+      );
+  `;
+
+  const createProblemsTableQuery = `
+      CREATE TABLE IF NOT EXISTS problems (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          docker_image VARCHAR(255) NOT NULL,
+          flag VARCHAR(255) NOT NULL,
+          difficulty INT,
+          category VARCHAR(255)
+      );
+  `;
+
+  const createUserSolvesTableQuery = `
+      CREATE TABLE IF NOT EXISTS user_solves (
+          id SERIAL PRIMARY KEY,
+          user_id INT,
+          problem_id INT,
+          is_solved BOOLEAN DEFAULT FALSE,
+          solved_at TIMESTAMP NOT NULL DEFAULT NOW(),
+          FOREIGN KEY (user_id) REFERENCES users(id),
+          FOREIGN KEY (problem_id) REFERENCES problems(id)
+      );
   `;
 
   try {
-    console.log('Creating "users" table...');
-    await pool.query(createUsersTableQuery);
-    console.log('Table "users" created successfully or already exists.');
+      console.log('Creating database tables...');
+      await pool.query(createUsersTableQuery);
+      await pool.query(createProblemsTableQuery);
+      await pool.query(createUserSolvesTableQuery);
+      console.log('Database tables created successfully or already exist.');
+
+      // ALTER TABLE로 기존 테이블에 필드 추가 (새로 추가한 필드만)
+      await pool.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'problems'::regclass AND attname = 'category') THEN
+            ALTER TABLE problems ADD COLUMN category VARCHAR(255);
+          END IF;
+        END $$;
+      `);
+      console.log('Database schema updated successfully.');
+
   } catch (err) {
-    console.error('Error creating table:', err.stack);
+      console.error('Error creating tables:', err.stack);
+      throw err;
   }
 }
 
