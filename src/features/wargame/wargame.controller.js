@@ -3,6 +3,7 @@ const Docker = require('dockerode');
 const fs = require('fs');
 const path = require('path');
 const unzipper = require('unzipper');
+const tar = require('tar-fs');
 //const docker = new Docker({ socketPath: '/var/run/docker.sock' }); // 리눅스 환경 경로
 const docker = new Docker({ socketPath: '//./pipe/docker_engine' }); // 윈도우 환경 경로 예시
 
@@ -142,46 +143,93 @@ exports.stopProblem = async (req, res) => {
 exports.createProblem = async (req, res) => {
     const { title, description, category, difficulty, flag } = req.body;
 
-    // 파일이 업로드되었는지 확인
     if (!req.file) {
-        return res.status(400).json({ message: '파일이 업로드되지 않았습니다.' });
+        return res.status(400).json({ message: '문제 파일(ZIP)이 업로드되지 않았습니다.' });
     }
 
     const { filename, path: zipFilePath } = req.file;
+    const extractedDir = path.join(__dirname, '../../docker-challenges', path.parse(filename).name + '_extracted');
 
     try {
-        const tempDir = path.join(__dirname, '../../docker-challenges', filename);
-        
-        // ZIP 파일 압축 해제
+        // 1. ZIP 파일 압축 해제
         await fs.createReadStream(zipFilePath)
-            .pipe(unzipper.Extract({ path: tempDir }))
+            .pipe(unzipper.Extract({ path: extractedDir }))
             .promise();
 
-        // Docker 이미지 빌드
-        const imageTag = `custom-problem-${filename}:${Date.now()}`;
-        const buildStream = await docker.buildImage(tempDir, { t: imageTag });
+        // 2. 압축 해제된 폴더를 타르볼(tarball)로 스트리밍하여 Docker에 전달
+        // 문제 제목을 기반으로 태그 생성 (공백 및 특수문자 제거, 소문자 변환)
+        const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        const imageTag = `pcode-wargame-${sanitizedTitle}:${Date.now()}`; // <-- 이 부분을 수정했습니다.
+        
+        // tar-fs를 사용하여 디렉토리 내용을 스트림으로 만듭니다.
+        const buildStream = await docker.buildImage(tar.pack(extractedDir), { t: imageTag });
 
-        // 빌드 진행 상황을 로그로 출력
+        // 빌드 진행 상황을 로그로 출력 (선택 사항)
         await new Promise((resolve, reject) => {
-            docker.modem.followProgress(buildStream, (err, res) => err ? reject(err) : resolve(res));
+            docker.modem.followProgress(buildStream, (err, res) => {
+                if (err) {
+                    console.error('Docker build progress error:', err);
+                    return reject(err);
+                }
+                // Docker 빌드 로그를 콘솔에 출력
+                res.forEach(item => {
+                    if (item.stream) process.stdout.write(item.stream);
+                });
+                resolve(res);
+            });
         });
 
-        // 데이터베이스에 문제 정보 삽입
+        // 3. 데이터베이스에 문제 정보 삽입
         const result = await db.query(
             'INSERT INTO problems (title, description, docker_image, flag, difficulty, category) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
             [title, description, imageTag, flag, difficulty, category]
         );
 
-        // 임시 파일 및 폴더 삭제
-        fs.unlinkSync(zipFilePath);
-        fs.rmdirSync(tempDir, { recursive: true });
+        // 4. 임시 파일 및 폴더 삭제
+        fs.unlinkSync(zipFilePath); // 원본 ZIP 파일 삭제
+        fs.rmdirSync(extractedDir, { recursive: true }); // 압축 해제된 폴더 삭제
 
         res.status(201).json({
-            message: '문제가 성공적으로 등록되었습니다.',
+            message: '문제가 성공적으로 등록되고 이미지가 빌드되었습니다.',
             problem: result.rows[0]
         });
     } catch (err) {
-        console.error('Error creating problem:', err.stack);
+        console.error('Error creating problem (Docker build/file op):', err.stack);
         res.status(500).json({ message: '문제 등록에 실패했습니다. 서버 로그를 확인하세요.' });
+    }
+};
+
+exports.deleteProblem = async (req, res) => {
+    const { problem_id } = req.params;
+
+    try {
+        // user_solves 테이블에서 해당 문제 해결 기록 먼저 삭제
+        await db.query('DELETE FROM user_solves WHERE problem_id = $1', [problem_id]);
+
+        // problems 테이블에서 문제 삭제
+        const result = await db.query('DELETE FROM problems WHERE id = $1 RETURNING docker_image', [problem_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: '삭제할 문제를 찾을 수 없습니다.' });
+        }
+
+        const dockerImageName = result.rows[0].docker_image;
+        
+        // 연결된 Docker 이미지 삭제 (선택 사항)
+        if (dockerImageName) {
+            try {
+                const image = docker.getImage(dockerImageName);
+                await image.remove({ force: true }); // 강제 삭제
+                console.log(`Docker image ${dockerImageName} deleted successfully.`);
+            } catch (dockerErr) {
+                console.warn(`Docker image deletion failed for ${dockerImageName}:`, dockerErr.message);
+                // 이미지가 존재하지 않거나 사용 중일 수 있으므로 오류를 발생시키지 않음
+            }
+        }
+
+        res.status(200).json({ message: '문제가 성공적으로 삭제되었습니다.' });
+    } catch (err) {
+        console.error('Error deleting problem:', err.stack);
+        res.status(500).json({ message: '문제 삭제에 실패했습니다.' });
     }
 };

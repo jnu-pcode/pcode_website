@@ -3,25 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryLinks = document.querySelectorAll('.category-list a');
     const difficultyLinks = document.querySelectorAll('.difficulty-list a');
 
-    // 모든 fetch 요청에 JWT 토큰을 자동으로 추가하는 함수
-    const authorizedFetch = async (url, options = {}) => {
-        const token = localStorage.getItem('token');
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            ...options.headers
-        };
-
-        const response = await fetch(url, { ...options, headers });
-        
-        if (response.status === 401 || response.status === 403) {
-            alert('인증이 만료되었습니다. 다시 로그인해 주세요.');
-            window.location.href = '/login.html';
-            return;
-        }
-
-        return response;
-    };
     let allProblems = [];
 
     const fetchProblems = async (filters = {}) => {
@@ -36,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const url = `/api/wargames?${params.toString()}`;
             
-            const response = await authorizedFetch(url);
+            const response = await fetch(url); 
             const data = await response.json();
             
             if (!response.ok) {
@@ -80,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.disabled = true;
             button.textContent = '실행 중...';
 
-            const response = await authorizedFetch(`/api/wargames/${problemId}/start`, {
+            const response = await fetch(`/api/wargames/${problemId}/start`, {
                 method: 'POST'
             });
 
@@ -119,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.disabled = true;
             button.textContent = '종료 중...';
 
-            const response = await authorizedFetch(`/api/wargames/stop/${containerId}`, {
+            const response = await fetch(`/api/wargames/stop/${containerId}`, {
                 method: 'POST'
             });
 
@@ -153,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.disabled = true;
             button.textContent = '제출 중...';
 
-            const response = await authorizedFetch(`/api/wargames/${problemId}/submit`, {
+            const response = await fetch(`/api/wargames/${problemId}/submit`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

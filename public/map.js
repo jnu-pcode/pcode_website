@@ -145,7 +145,7 @@ window.addEventListener('keydown', (event) => {
     if (event.key === 'e' || event.key === 'E') {
         const nearby = getNearbyInteractableTile();
         if (nearby && nearby.type === 4) { // 4는 워게임센터
-            window.location.href = '/wargame.html';
+            window.location.href = '/wargame';
         }
     }
 });

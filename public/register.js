@@ -4,7 +4,7 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const authCode = document.getElementById('authCode').value;
-    const messageEl = document.getElementById('message');
+    const statusMessageEl = document.getElementById('statusMessage');
 
     try {
         const response = await fetch('/api/auth/register', {
@@ -20,11 +20,17 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
         });
 
         const data = await response.json();
-        messageEl.textContent = data.message;
-        messageEl.style.color = response.ok ? 'green' : 'red';
+        statusMessageEl.textContent = data.message;
+        statusMessageEl.style.color = response.ok ? 'green' : 'red';
+        
+        if (response.ok) { // 회원가입 성공 시
+            alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.'); // 사용자에게 알림
+            window.location.href = '/login'; // 로그인 페이지로 리다이렉트
+        }
+
     } catch (error) {
         console.error('Error:', error);
-        messageEl.textContent = '서버 오류가 발생했습니다.';
-        messageEl.style.color = 'red';
+        statusMessageEl.textContent = '서버 오류가 발생했습니다.';
+        statusMessageEl.style.color = 'red';
     }
 });

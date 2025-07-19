@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>고전 암호 해독 (Caesar Cipher)</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f0f0f0; }
+        .container { background: #ffffff; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        p { color: #666; }
+        .encrypted-message { 
+            background-color: #e0e0e0; padding: 15px; border-radius: 5px; 
+            font-family: 'Courier New', monospace; font-size: 1.1em; word-wrap: break-word;
+            margin-bottom: 20px;
+        }
+        input[type="number"] { width: 100px; padding: 8px; margin: 10px 0; }
+        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .result-message { margin-top: 20px; font-weight: bold; color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>고전 암호 해독 (Caesar Cipher)</h1>
+        <p>주어진 암호문을 시저 암호 방식으로 해독하여 Flag를 찾아보세요. Shift 값(1~25)을 입력하여 암호문을 해독할 수 있습니다.</p>
+        
+        <div class="encrypted-message">
+            암호문: JXNNX{RYYF_NY_X_KFXV}
+        </div>
+
+        <div>
+            <label for="shift">Shift 값 (1-25):</label>
+            <input type="number" id="shift" min="1" max="25" value="1">
+            <button onclick="decryptMessage()">해독하기</button>
+        </div>
+
+        <div class="result-message" id="decryptedMessage">
+            해독 결과가 여기에 표시됩니다.
+        </div>
+    </div>
+
+    <script>
+        function decryptMessage() {
+            const encryptedText = "JXNNX{RYYF_NY_X_KFXV}"; // 암호문
+            const shift = parseInt(document.getElementById('shift').value);
+            let decryptedText = "";
+
+            if (isNaN(shift) || shift < 1 || shift > 25) {
+                alert("Shift 값은 1에서 25 사이의 숫자여야 합니다.");
+                return;
+            }
+
+            for (let i = 0; i < encryptedText.length; i++) {
+                let char = encryptedText[i];
+                if (char >= 'A' && char <= 'Z') {
+                    char = String.fromCharCode(((char.charCodeAt(0) - 65 - shift + 26) % 26) + 65);
+                }
+                decryptedText += char;
+            }
+            document.getElementById('decryptedMessage').innerText = "해독 결과: " + decryptedText;
+
+            // 정답 플래그: HELLO{CAESAR_IS_A_KING}
+            // 사용자는 직접 이 결과에서 규칙을 찾아내거나, 브루트포스해야 합니다.
+        }
+    </script>
+</body>
+</html>
