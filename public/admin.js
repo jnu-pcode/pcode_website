@@ -1,9 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     const problemListElement = document.getElementById('problem-list');
 
+    // 쿠키에서 토큰을 가져오는 함수
+    function getTokenFromCookies() {
+        const token = document.cookie.split('; ').find(row => row.startsWith('token='));
+        return token ? token.split('=')[1] : null;
+    }
+
     // 모든 fetch 요청에 JWT 토큰을 자동으로 추가하는 함수
     const authorizedFetch = async (url, options = {}) => {
-        const token = localStorage.getItem('token');
+        const token = getTokenFromCookies();
         console.log('authorizedFetch: 토큰 가져옴 ->', token ? '존재함' : '없음'); // <-- 이 줄 추가
 
         const headers = {

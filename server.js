@@ -14,6 +14,7 @@
  * - 2025-07-15 00:35: 관리자 인증 미들웨어 (authorizeAdmin) 추가 및 적용
  * - 2025-07-15 01:45: map.html을 비로그인 사용자도 접근 가능하도록 authenticateToken 미들웨어 제거
  * - 2025-07-19 09:30: URL에서 .html 확장자 제거를 위한 라우트 수정
+ * - 2025-07-19 09:45: 사용자 위치 저장 API 라우트 추가
  */
 const express = require('express');
 const dotenv = require('dotenv');
@@ -25,6 +26,7 @@ const cookieParser = require('cookie-parser');
 const db = require('./src/db');
 const authController = require('./src/features/authentication/auth.controller');
 const wargameController = require('./src/features/wargame/wargame.controller');
+const userController = require('./src/features/user/user.controller');
 
 dotenv.config();
 
@@ -135,6 +137,10 @@ app.post('/api/wargames/create', authenticateToken, authorizeMember, getUploader
 
 // 관리자 권한이 필요한 API (문제 삭제)
 app.delete('/api/wargames/:problem_id', authenticateToken, authorizeAdmin, wargameController.deleteProblem);
+
+// 사용자 위치 저장 API (FormData와 JSON 모두 처리)
+app.post('/api/user/position', authenticateToken, getUploader('uploads/').none(), userController.savePosition);
+app.get('/api/user/me', authenticateToken, userController.getUserInfo); // <-- 새 라우트 추가
 
 // --- 모든 라우트 정의 끝 ---
 

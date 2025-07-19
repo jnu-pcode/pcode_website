@@ -30,6 +30,8 @@ async function createTables() {
             password_hash VARCHAR(255) NOT NULL,
             is_member BOOLEAN NOT NULL DEFAULT FALSE,
             is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+            x_position INT DEFAULT 0,
+            y_position INT DEFAULT 0,
             created_at TIMESTAMP NOT NULL
         );
     `;

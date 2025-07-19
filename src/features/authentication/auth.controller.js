@@ -39,8 +39,8 @@ exports.register = async (req, res) => {
 
         // 4. DB에 사용자 정보 저장: is_member는 인증 코드에 따라, is_admin은 항상 false
         await db.query(
-            'INSERT INTO users (username, password_hash, is_member, is_admin, created_at) VALUES ($1, $2, $3, $4, NOW())',
-            [username, hashedPassword, isMember, false] // isMember 변수 사용
+            'INSERT INTO users (username, password_hash, is_member, is_admin, x_position, y_position, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
+            [username, hashedPassword, isMember, false, 0, 0] // 초기 위치는 0,0으로 저장
         );
 
         res.status(201).json({ message: '회원가입이 성공적으로 완료되었습니다.' });
@@ -73,10 +73,17 @@ exports.login = async (req, res) => {
       }
 
       const token = jwt.sign(
-          { userId: user.id, username: user.username, is_admin: user.is_admin, is_member: user.is_member },
-          JWT_SECRET,
-          { expiresIn: '1h' }
-      );
+        { 
+            userId: user.id, 
+            username: user.username, 
+            is_admin: user.is_admin, 
+            is_member: user.is_member,
+            x_position: user.x_position, // <-- 위치 정보 추가
+            y_position: user.y_position  // <-- 위치 정보 추가
+        },
+        JWT_SECRET,
+        { expiresIn: '1h' }
+    );
 
       // JWT 토큰을 HttpOnly 쿠키로 설정
       res.cookie('token', token, {
