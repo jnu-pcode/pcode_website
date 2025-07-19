@@ -79,7 +79,11 @@ exports.login = async (req, res) => {
             is_admin: user.is_admin, 
             is_member: user.is_member,
             x_position: user.x_position, // <-- 위치 정보 추가
-            y_position: user.y_position  // <-- 위치 정보 추가
+            y_position: user.y_position, // <-- 위치 정보 추가
+            level: user.level || 1,      // <-- 레벨 정보 추가
+            experience: user.experience || 0, // <-- 경험치 정보 추가
+            title: user.title || '새싹',  // <-- 칭호 정보 추가
+            special_title: user.special_title // <-- 특별 칭호 추가
         },
         JWT_SECRET,
         { expiresIn: '1h' }
@@ -101,4 +105,60 @@ exports.login = async (req, res) => {
       console.error(err);
       res.status(500).json({ message: '서버 오류가 발생했습니다.' });
   }
+};
+
+// 토큰 갱신 API (사용자 정보 변경 시 새로운 토큰 발급)
+exports.refreshToken = async (req, res) => {
+    try {
+        const userId = req.user.userId || req.user.id;
+        
+        // 최신 사용자 정보 조회
+        const userResult = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
+        
+        const user = userResult.rows[0];
+        
+        // 새로운 토큰 생성 (최신 정보로)
+        const token = jwt.sign(
+            { 
+                userId: user.id, 
+                username: user.username, 
+                is_admin: user.is_admin, 
+                is_member: user.is_member,
+                x_position: user.x_position,
+                y_position: user.y_position,
+                level: user.level || 1,
+                experience: user.experience || 0,
+                title: user.title || '새싹',
+                special_title: user.special_title
+            },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+        
+        // 새로운 토큰을 쿠키로 설정
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 3600000 // 1시간
+        });
+        
+        res.status(200).json({ 
+            message: '토큰이 성공적으로 갱신되었습니다.',
+            user: {
+                id: user.id,
+                username: user.username,
+                level: user.level,
+                title: user.title,
+                special_title: user.special_title,
+                is_admin: user.is_admin
+            }
+        });
+        
+    } catch (err) {
+        console.error('토큰 갱신 오류:', err);
+        res.status(500).json({ message: '토큰 갱신 중 오류가 발생했습니다.' });
+    }
 };

@@ -4,15 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>p.code의 숲</title>
-  <style>
-    body { margin: 0; overflow: hidden; background-color: #333; }
-    canvas { display: block; margin: auto; border: 1px solid #555; }
-  </style>
+  <link rel="stylesheet" href="css/animal-crossing-ranking.css">
+  <link rel="stylesheet" href="css/map.css">
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+  
+  <!-- 레벨 UI -->
+  <div class="level-ui" id="levelUI">
+    <div class="level-header">
+      <div class="level-number" id="levelNumber">Lv.1</div>
+      <div class="level-title" id="levelTitle">새싹</div>
+      <div class="special-title" id="specialTitle"></div>
+    </div>
+    <div class="xp-container">
+      <div class="xp-bar">
+        <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+      </div>
+      <div class="xp-text">
+        <span id="currentXP">0 XP</span>
+        <span id="maxXP">1000 XP</span>
+      </div>
+    </div>
+  </div>
 
-<!-- index.html에 있는 hintBar 스타일을 이렇게 수정 -->
     <div id="hintBar" style="
         position: absolute;
         display: none;
@@ -26,7 +41,36 @@
         z-index: 20;
     "></div>
 
+  <div id="adminAccess" style="
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: none;
+      z-index: 1000;
+  ">
+    <button onclick="window.location.href='/admin/level-management'" style="
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        transition: all 0.3s ease;
+    " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+             👑 레벨 관리
+     </button>
+   </div>
 
+   <div class="bottom-button-container">
+       <button onclick="showAnimalRanking()" class="ranking-button" title="마을 명예의 전당">
+        🏆
+      </button>
+   </div>
+
+  <script src="js/animal-crossing-ranking.js"></script>
   <script type="module" src="map.js"></script>
 </body>
 </html>

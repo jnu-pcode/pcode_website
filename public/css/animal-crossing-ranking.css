@@ -1,0 +1,546 @@
+/* 동물의 숲 스타일 랭킹보드 CSS */
+
+/* 랭킹보드 메인 컨테이너 */
+.ranking-board-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* 나무 게시판 스타일 */
+.wooden-board {
+    background: linear-gradient(145deg, #8B4513, #D2691E);
+    border: 8px solid #654321;
+    border-radius: 20px;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.5),
+        inset 0 2px 5px rgba(255, 255, 255, 0.2),
+        inset 0 -5px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+    width: 90vw;
+    max-width: 480px;
+    min-width: 320px;
+    height: 80vh;
+    max-height: 600px;
+    min-height: 400px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 나무 질감 효과 */
+.wooden-board::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(101, 67, 33, 0.1) 2px,
+            rgba(101, 67, 33, 0.1) 4px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 20px,
+            rgba(139, 69, 19, 0.1) 20px,
+            rgba(139, 69, 19, 0.1) 22px
+        );
+    border-radius: 12px;
+}
+
+/* 상단 헤더 */
+.board-header {
+    background: linear-gradient(145deg, #2E8B57, #3CB371);
+    margin: 15px;
+    padding: 15px 20px;
+    border-radius: 15px;
+    border: 3px solid #228B22;
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+}
+
+.board-title {
+    color: #FFFFFF;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    font-family: 'Comic Sans MS', cursive, 'Segoe UI', sans-serif;
+}
+
+.board-subtitle {
+    color: #F0FFF0;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 5px;
+    opacity: 0.9;
+}
+
+/* 잎사귀 장식 */
+.leaf-decoration {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    background: #32CD32;
+    border-radius: 0 100% 0 100%;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    animation: leaf-sway 3s ease-in-out infinite;
+}
+
+.leaf-decoration.left {
+    top: -12px;
+    left: 20px;
+}
+
+.leaf-decoration.right {
+    top: -12px;
+    right: 20px;
+    animation-delay: 1.5s;
+}
+
+.leaf-decoration::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    width: 15px;
+    height: 15px;
+    background: #228B22;
+    border-radius: 0 100% 0 100%;
+    transform: rotate(-90deg);
+}
+
+/* 랭킹 리스트 컨테이너 */
+.ranking-list-container {
+    margin: 0 15px 15px 15px;
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    border: 2px solid #DEB887;
+    position: relative;
+    z-index: 2;
+    min-height: 0;
+}
+
+/* 스크롤바 스타일링 */
+.ranking-list-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ranking-list-container::-webkit-scrollbar-track {
+    background: #F5DEB3;
+    border-radius: 4px;
+}
+
+.ranking-list-container::-webkit-scrollbar-thumb {
+    background: #8B4513;
+    border-radius: 4px;
+}
+
+.ranking-list-container::-webkit-scrollbar-thumb:hover {
+    background: #654321;
+}
+
+/* 개별 랭킹 아이템 */
+.ranking-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 2px dotted #DEB887;
+    background: linear-gradient(90deg, transparent, rgba(255, 248, 220, 0.5), transparent);
+    transition: all 0.3s ease;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 70px;
+}
+
+/* 호버 효과 제거 */
+
+.ranking-item:last-child {
+    border-bottom: none;
+}
+
+/* 순위 배지 */
+.rank-badge {
+    min-width: 45px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 16px;
+    margin-right: 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.rank-badge.gold {
+    background: linear-gradient(145deg, #FFD700, #FFA500);
+    color: #8B4513;
+    border: 2px solid #DAA520;
+    animation: crown-glow 2s ease-in-out infinite alternate;
+}
+
+.rank-badge.silver {
+    background: linear-gradient(145deg, #C0C0C0, #A9A9A9);
+    color: #2F4F4F;
+    border: 2px solid #808080;
+}
+
+.rank-badge.bronze {
+    background: linear-gradient(145deg, #CD7F32, #A0522D);
+    color: #FFFFFF;
+    border: 2px solid #8B4513;
+}
+
+.rank-badge.normal {
+    background: linear-gradient(145deg, #98FB98, #90EE90);
+    color: #2E8B57;
+    border: 2px solid #32CD32;
+}
+
+/* 사용자 정보 */
+.user-info {
+    flex: 1;
+    margin-right: 15px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.username-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+}
+
+.username {
+    font-size: 16px;
+    font-weight: bold;
+    color: #2E8B57;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.user-title {
+    font-size: 12px;
+    color: #8B4513;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.special-title {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+/* 레벨 및 경험치 정보 */
+.level-info {
+    text-align: right;
+    min-width: 80px;
+}
+
+.level-display {
+    font-size: 14px;
+    font-weight: bold;
+    color: #32CD32;
+    background: linear-gradient(145deg, #F0FFF0, #E0FFE0);
+    padding: 3px 8px;
+    border-radius: 12px;
+    border: 1px solid #32CD32;
+    margin-bottom: 3px;
+    box-shadow: 0 2px 4px rgba(50, 205, 50, 0.2);
+}
+
+.experience-display {
+    font-size: 11px;
+    color: #666;
+}
+
+/* 도토리/밤 아이콘 장식 */
+.acorn-decoration {
+    position: absolute;
+    top: 15px;
+    width: 20px;
+    height: 20px;
+    background: #8B4513;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    transform: rotate(-45deg);
+    opacity: 0.3;
+}
+
+.acorn-decoration::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 6px;
+    background: #654321;
+    border-radius: 50% 50% 0 0;
+}
+
+.acorn-decoration.left {
+    left: -10px;
+}
+
+.acorn-decoration.right {
+    right: -10px;
+}
+
+/* 닫기 버튼 (사과 모양) */
+.close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(145deg, #FF6B6B, #FF5252);
+    border: 2px solid #D32F2F;
+    border-radius: 70% 70% 70% 70% / 60% 60% 80% 80%;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 4;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+}
+
+/* 사과 잎사귀 */
+.close-button::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    right: 8px;
+    width: 8px;
+    height: 6px;
+    background: #4CAF50;
+    border-radius: 0 100% 0 100%;
+    transform: rotate(45deg);
+    box-shadow: 0 1px 3px rgba(76, 175, 80, 0.3);
+}
+
+/* 사과 줄기 */
+.close-button::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: 12px;
+    width: 2px;
+    height: 4px;
+    background: #8D6E63;
+    border-radius: 1px;
+}
+
+.close-button:hover {
+    background: linear-gradient(145deg, #FF5252, #F44336);
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 16px rgba(211, 47, 47, 0.6);
+}
+
+/* 푸터 정보 */
+.board-footer {
+    margin: 0 15px 15px 15px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+    border: 1px solid #DEB887;
+    text-align: center;
+    font-size: 11px;
+    color: #8B4513;
+    position: relative;
+    z-index: 2;
+}
+
+/* 애니메이션 정의 제거됨 */
+
+@keyframes crown-glow {
+    0% {
+        box-shadow: 0 3px 8px rgba(255, 215, 0, 0.4), 0 0 15px rgba(255, 215, 0, 0.2);
+    }
+    100% {
+        box-shadow: 0 3px 8px rgba(255, 215, 0, 0.8), 0 0 25px rgba(255, 215, 0, 0.4);
+    }
+}
+
+@keyframes leaf-sway {
+    0%, 100% { transform: rotate(45deg) translateY(0px); }
+    50% { transform: rotate(50deg) translateY(-3px); }
+}
+
+/* 반응형 */
+@media (max-width: 600px) {
+    .wooden-board {
+        width: 95vw;
+        height: 90vh;
+        min-width: 280px;
+        border: 6px solid #654321;
+    }
+    
+    .board-header {
+        margin: 10px;
+        padding: 12px 15px;
+    }
+    
+    .board-title {
+        font-size: 18px;
+    }
+    
+    .board-subtitle {
+        font-size: 11px;
+    }
+    
+    .ranking-list-container {
+        margin: 0 10px 10px 10px;
+    }
+    
+    .ranking-item {
+        padding: 8px 10px;
+        min-height: 60px;
+    }
+    
+    .rank-badge {
+        min-width: 32px;
+        height: 32px;
+        font-size: 12px;
+        margin-right: 8px;
+    }
+    
+    .username {
+        font-size: 14px;
+        max-width: 100px;
+    }
+    
+    .special-title {
+        font-size: 10px;
+        padding: 3px 6px;
+        border-radius: 10px;
+    }
+    
+    .user-title {
+        font-size: 11px;
+        max-width: 120px;
+    }
+    
+    .level-badge {
+        padding: 3px 8px;
+        font-size: 10px;
+        min-width: 35px;
+    }
+    
+    .close-button {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+        top: 12px;
+        right: 12px;
+    }
+}
+
+/* 매우 작은 화면 (320px 이하) */
+@media (max-width: 350px) {
+    .wooden-board {
+        width: 98vw;
+        height: 92vh;
+        min-width: 280px;
+        border: 4px solid #654321;
+    }
+    
+    .board-header {
+        margin: 8px;
+        padding: 10px 12px;
+    }
+    
+    .board-title {
+        font-size: 16px;
+    }
+    
+    .board-subtitle {
+        font-size: 10px;
+    }
+    
+    .ranking-list-container {
+        margin: 0 8px 8px 8px;
+    }
+    
+    .ranking-item {
+        padding: 6px 8px;
+        min-height: 55px;
+    }
+    
+    .rank-badge {
+        min-width: 28px;
+        height: 28px;
+        font-size: 11px;
+        margin-right: 6px;
+    }
+    
+    .username {
+        font-size: 13px;
+        max-width: 100px;
+    }
+    
+    .user-title {
+        font-size: 10px;
+        max-width: 100px;
+    }
+    
+    .special-title {
+        font-size: 9px;
+        padding: 2px 5px;
+        border-radius: 8px;
+    }
+    
+    .level-badge {
+        padding: 2px 6px;
+        font-size: 9px;
+        min-width: 30px;
+    }
+    
+    .close-button {
+        width: 26px;
+        height: 26px;
+        font-size: 11px;
+        top: 10px;
+        right: 10px;
+    }
+} 

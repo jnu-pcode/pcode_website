@@ -9,7 +9,7 @@ const docker = new Docker({ socketPath: '//./pipe/docker_engine' }); // 윈도�
 
 exports.getProblems = async (req, res) => {
     const { category, difficulty } = req.query;
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id; // userId와 id 둘 다 체크
     const queryParams = [];
 
     let queryText = `
@@ -47,7 +47,6 @@ exports.getProblems = async (req, res) => {
         
         res.status(200).json({ problems: problems.rows });
     } catch (err) {
-        console.error('Error fetching problems:', err.stack);
         res.status(500).json({ message: '문제 목록을 가져오는 데 실패했습니다.' });
     }
 };
@@ -90,7 +89,6 @@ exports.startProblem = async (req, res) => {
         });
 
     } catch (err) {
-        console.error('Docker start error:', err);
         res.status(500).json({ message: '문제 시작에 실패했습니다. 서버 로그를 확인하세요.' });
     }
 };
@@ -99,27 +97,92 @@ exports.startProblem = async (req, res) => {
 exports.submitFlag = async (req, res) => {
     const { problem_id } = req.params;
     const { flag } = req.body;
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id; // userId와 id 둘 다 체크
 
     try {
+        // 트랜잭션 시작 (해결 기록과 경험치 추가를 원자적으로 처리)
+        await db.query('BEGIN');
+        
         const problem = await db.query('SELECT * FROM problems WHERE id = $1', [problem_id]);
         if (problem.rows.length === 0) {
+            await db.query('ROLLBACK');
             return res.status(404).json({ message: '문제를 찾을 수 없습니다.' });
         }
 
         const problemData = problem.rows[0];
 
         if (problemData.flag.trim() === flag.trim()) {
+            // 1. 이미 해결한 문제인지 확인 (중복 해결 방지)
+            const existingSolve = await db.query(
+                'SELECT * FROM user_solves WHERE user_id = $1 AND problem_id = $2',
+                [userId, problem_id]
+            );
+            
+            const isFirstSolve = existingSolve.rows.length === 0;
+            
+            // 2. 해결 기록 저장
             await db.query(
                 'INSERT INTO user_solves (user_id, problem_id, is_solved) VALUES ($1, $2, TRUE) ON CONFLICT DO NOTHING',
                 [userId, problem_id]
             );
+            
+            // 3. 경험치 지급 (처음 해결하는 경우에만)
+            if (isFirstSolve) {
+                
+                // 레벨 시스템 API 호출 (내부 API)
+                const levelResponse = await fetch('http://localhost:5000/api/level/experience', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        actionType: 'wargame_solve',
+                        xpGained: null, // titles.config에서 자동 계산
+                        difficulty: problemData.difficulty,
+                        description: `워게임 문제 해결: ${problemData.title} (난이도 ${problemData.difficulty})`,
+                        internalKey: process.env.INTERNAL_API_KEY
+                    })
+                });
+                
+                if (levelResponse.ok) {
+                    const levelData = await levelResponse.json();
+                    
+                    // 트랜잭션 커밋
+                    await db.query('COMMIT');
+                    
+                    // 레벨업이 발생한 경우 특별 메시지 전송
+                    if (levelData.leveledUp) {
+                        return res.status(200).json({ 
+                            message: '정답입니다! 문제가 해결되었습니다.',
+                            levelUp: true,
+                            newLevel: levelData.newLevel,
+                            newTitle: levelData.newTitle,
+                            experience: levelData.totalExperience
+                        });
+                    } else {
+                        return res.status(200).json({ 
+                            message: '정답입니다! 문제가 해결되었습니다.',
+                            levelUp: false,
+                            experience: levelData.totalExperience
+                        });
+                    }
+                } else {
+                    // 경험치 지급이 실패해도 문제 해결은 인정
+                    await db.query('COMMIT');
             return res.status(200).json({ message: '정답입니다! 문제가 해결되었습니다.' });
+                }
+            } else {
+                // 이미 해결한 문제인 경우
+                await db.query('COMMIT');
+                return res.status(200).json({ message: '이미 해결한 문제입니다.' });
+            }
         } else {
+            await db.query('ROLLBACK');
             return res.status(400).json({ message: '오답입니다. 다시 시도해 보세요.' });
         }
     } catch (err) {
-        console.error('Submit flag error:', err);
+        await db.query('ROLLBACK');
         res.status(500).json({ message: '서버 오류가 발생했습니다.' });
     }
 };
@@ -128,14 +191,53 @@ exports.submitFlag = async (req, res) => {
 exports.stopProblem = async (req, res) => {
     const { containerId } = req.params;
 
+    // containerId 유효성 검사
+    if (!containerId || containerId === 'undefined' || containerId.trim() === '') {
+        return res.status(400).json({ 
+            message: '유효하지 않은 컨테이너 ID입니다.',
+            containerId: containerId 
+        });
+    }
+
     try {
         const container = docker.getContainer(containerId);
+        
+        // 컨테이너 존재 여부 확인
+        const containerInfo = await container.inspect().catch(() => null);
+        if (!containerInfo) {
+            return res.status(404).json({ 
+                message: '해당 컨테이너를 찾을 수 없습니다. 이미 종료되었을 수 있습니다.',
+                containerId: containerId 
+            });
+        }
+
+        // 컨테이너가 실행 중인 경우에만 중지
+        if (containerInfo.State.Running) {
         await container.stop();
+        }
+        
+        // 컨테이너 삭제
         await container.remove();
-        res.status(200).json({ message: '컨테이너가 성공적으로 삭제되었습니다.' });
+        
+        res.status(200).json({ 
+            message: '컨테이너가 성공적으로 삭제되었습니다.',
+            containerId: containerId 
+        });
     } catch (err) {
-        console.error('Docker stop error:', err);
-        res.status(500).json({ message: '컨테이너 삭제에 실패했습니다.' });
+        
+        // 404 오류 (컨테이너 없음)는 이미 삭제된 것으로 간주
+        if (err.statusCode === 404) {
+            return res.status(200).json({ 
+                message: '컨테이너가 이미 삭제되었거나 존재하지 않습니다.',
+                containerId: containerId 
+            });
+        }
+        
+        res.status(500).json({ 
+            message: '컨테이너 삭제에 실패했습니다.',
+            error: err.message,
+            containerId: containerId 
+        });
     }
 };
 
@@ -168,7 +270,6 @@ exports.createProblem = async (req, res) => {
         await new Promise((resolve, reject) => {
             docker.modem.followProgress(buildStream, (err, res) => {
                 if (err) {
-                    console.error('Docker build progress error:', err);
                     return reject(err);
                 }
                 // Docker 빌드 로그를 콘솔에 출력
@@ -194,7 +295,6 @@ exports.createProblem = async (req, res) => {
             problem: result.rows[0]
         });
     } catch (err) {
-        console.error('Error creating problem (Docker build/file op):', err.stack);
         res.status(500).json({ message: '문제 등록에 실패했습니다. 서버 로그를 확인하세요.' });
     }
 };
@@ -220,16 +320,13 @@ exports.deleteProblem = async (req, res) => {
             try {
                 const image = docker.getImage(dockerImageName);
                 await image.remove({ force: true }); // 강제 삭제
-                console.log(`Docker image ${dockerImageName} deleted successfully.`);
             } catch (dockerErr) {
-                console.warn(`Docker image deletion failed for ${dockerImageName}:`, dockerErr.message);
                 // 이미지가 존재하지 않거나 사용 중일 수 있으므로 오류를 발생시키지 않음
             }
         }
 
         res.status(200).json({ message: '문제가 성공적으로 삭제되었습니다.' });
     } catch (err) {
-        console.error('Error deleting problem:', err.stack);
         res.status(500).json({ message: '문제 삭제에 실패했습니다.' });
     }
 };

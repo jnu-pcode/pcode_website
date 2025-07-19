@@ -53,9 +53,10 @@
 - ✅ **워게임 시스템**: Docker 기반의 실전 보안 문제 풀이
 - ✅ **기본 마을 구현**: 2D 탑뷰 방식의 마을 지도와 아바타 이동
 
-### 🚧 Phase 2: 핵심 기능 확장 (예정)
+### 🚧 Phase 2: 핵심 기능 확장 (진행 중)
+- ✅ **레벨 시스템 (백엔드)**: 지수적 경험치, 칭호 시스템, 워게임 연동 준비
 - 🔄 **아바타 및 개인 집**: 나만의 아바타 커스터마이징 및 HTML 포트폴리오 집
-- 🔄 **레벨 시스템**: 학습 및 활동에 따른 경험치/레벨/칭호 시스템
+- 🔄 **레벨 시스템 (프론트엔드)**: UI 및 사용자 경험 개선
 - 🔄 **Vuln-pedia**: 유명 보안 취약점, 악성코드 등을 전시하는 박물관
 
 ### 📋 Phase 3: 고급 기능 및 상호작용 (계획)
@@ -121,6 +122,9 @@
     
     # Club Authentication Code
     CLUB_AUTH_CODE=[]
+    
+    # Internal API Key (서버 간 통신용)
+    INTERNAL_API_KEY=pcode-internal-2025-secure-key-change-this
     ```
 
 4.  서버를 실행합니다. 서버가 자동으로 데이터베이스 테이블을 생성합니다.
@@ -162,6 +166,10 @@
 ### 사용자 API
 - `GET /api/user/me` - 사용자 정보 조회
 - `POST /api/user/position` - 위치 저장
+
+### 레벨 시스템 API
+- `GET /api/level/user/:userId` - 사용자 레벨 정보 조회
+- `POST /api/level/experience` - 경험치 추가 (내부 API)
 
 ### 관리 API (관리자/동아리원 권한)
 - `POST /api/wargames/create` - 문제 생성 (동아리원)

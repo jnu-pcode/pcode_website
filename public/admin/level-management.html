@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>레벨 시스템 관리 - p.code Admin</title>
+    <link rel="stylesheet" href="level-management.css">
+</head>
+<body>
+    <div class="container">
+        <header class="admin-header">
+            <h1>🎮 레벨 시스템 관리</h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn-primary">🔄 새로고침</button>
+                <a href="/map" class="btn-secondary">🏠 메인으로</a>
+            </div>
+        </header>
+
+        <!-- 실시간 통계 대시보드 -->
+        <section class="dashboard">
+            <h2>📊 실시간 대시보드</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalUsers">0</div>
+                    <div class="stat-label">총 사용자</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgLevel">0</div>
+                    <div class="stat-label">평균 레벨</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalXP">0</div>
+                    <div class="stat-label">총 경험치</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeToday">0</div>
+                    <div class="stat-label">오늘 활동</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 사용자 관리 -->
+        <section class="user-management">
+            <div class="section-header">
+                <h2>👥 사용자 관리</h2>
+                <div class="controls">
+                    <input type="text" id="userSearch" placeholder="사용자 검색..." class="search-input">
+                    <select id="levelFilter" class="filter-select">
+                        <option value="">모든 레벨</option>
+                        <option value="1">1레벨</option>
+                        <option value="2">2레벨</option>
+                        <option value="3">3레벨</option>
+                        <option value="4">4레벨</option>
+                        <option value="5+">5레벨 이상</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="user-table-container">
+                <table class="user-table" id="userTable">
+                    <thead>
+                        <tr>
+                            <th>사용자</th>
+                            <th>레벨</th>
+                            <th>경험치</th>
+                            <th>진행률</th>
+                            <th>칭호</th>
+                            <th>특별 칭호</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <!-- 동적 생성 -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 칭호 관리 -->
+        <section class="title-management">
+            <h2>🏆 칭호 관리</h2>
+            
+            <!-- 기본 칭호 설정 -->
+            <div class="title-section">
+                <h3>📜 기본 칭호 설정</h3>
+                <div class="title-grid" id="basicTitlesGrid">
+                    <!-- 동적 생성 -->
+                </div>
+                <button id="saveTitlesBtn" class="btn-primary">💾 칭호 설정 저장</button>
+            </div>
+
+            <!-- 특별 칭호 관리 -->
+            <div class="title-section">
+                <h3>⭐ 특별 칭호 관리</h3>
+                <div class="special-titles" id="specialTitlesGrid">
+                    <!-- 동적 생성 -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 사용자 상세 모달 -->
+    <div id="userModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalUserName">사용자 상세</h3>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- 경험치 조정 -->
+                <div class="adjustment-section">
+                    <h4>📈 레벨/경험치 조정</h4>
+                    <div class="form-group">
+                        <label>현재 경험치:</label>
+                        <input type="number" id="currentXP" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>경험치 추가/차감:</label>
+                        <input type="number" id="xpAdjustment" placeholder="양수면 추가, 음수면 차감">
+                    </div>
+                    <div class="form-group">
+                        <label>사유:</label>
+                        <input type="text" id="adjustmentReason" placeholder="조정 사유 입력">
+                    </div>
+                    <button id="applyXPBtn" class="btn-primary">적용</button>
+                </div>
+
+                <!-- 특별 칭호 부여 -->
+                <div class="special-title-section">
+                    <h4>⭐ 특별 칭호 부여</h4>
+                    <select id="specialTitleSelect">
+                        <option value="">칭호 선택</option>
+                    </select>
+                    <button id="grantTitleBtn" class="btn-primary">칭호 부여</button>
+                    <button id="removeTitleBtn" class="btn-danger">칭호 제거</button>
+                </div>
+
+                <!-- 경험치 히스토리 -->
+                <div class="history-section">
+                    <h4>📋 경험치 히스토리</h4>
+                    <div class="history-list" id="xpHistory">
+                        <!-- 동적 생성 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="level-management.js"></script>
+</body>
+</html> 

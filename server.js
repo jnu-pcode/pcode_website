@@ -27,6 +27,9 @@ const db = require('./src/db');
 const authController = require('./src/features/authentication/auth.controller');
 const wargameController = require('./src/features/wargame/wargame.controller');
 const userController = require('./src/features/user/user.controller');
+const levelController = require('./src/features/level/level.controller');
+const adminController = require('./src/features/admin/admin.controller');
+const rankingController = require('./src/features/ranking/ranking.controller');
 
 dotenv.config();
 
@@ -45,7 +48,6 @@ const authenticateToken = (req, res, next) => {
   const token = req.cookies.token;
 
   if (token == null) {
-      console.log('authenticateToken: 토큰 없음. 401 반환');
       if (req.accepts('html')) {
           return res.redirect('/login.html?message=' + encodeURIComponent('로그인이 필요합니다.'));
       }
@@ -62,36 +64,29 @@ const authenticateToken = (req, res, next) => {
           return res.status(403).json({ message: '유효하지 않은 토큰입니다.' });
       }
       req.user = user;
-      console.log('authenticateToken: 사용자 인증됨. req.user:', req.user);
       next();
   });
 };
 
 // 관리자 권한 확인 미들웨어
 const authorizeAdmin = (req, res, next) => {
-  console.log('authorizeAdmin: req.user:', req.user);
   if (!req.user || !req.user.is_admin) {
-      console.log('authorizeAdmin: 관리자 권한 없음. 403 반환');
       if (req.accepts('html')) {
           return res.redirect('/login.html?message=' + encodeURIComponent('관리자 권한이 필요합니다.'));
       }
       return res.status(403).json({ message: '관리자 권한이 필요합니다.' });
   }
-  console.log('authorizeAdmin: 관리자 권한 확인됨.');
   next();
 };
 
 // 동아리원 권한 확인 미들웨어
 const authorizeMember = (req, res, next) => {
-  console.log('authorizeMember: req.user:', req.user);
   if (!req.user || !req.user.is_member) {
-      console.log('authorizeMember: 동아리원 권한 없음. 403 반환');
       if (req.accepts('html')) {
           return res.redirect('/login.html?message=' + encodeURIComponent('동아리원 권한이 필요합니다.'));
       }
       return res.status(403).json({ message: '동아리원 권한이 필요합니다.' });
   }
-  console.log('authorizeMember: 동아리원 권한 확인됨.');
   next();
 };
 
@@ -113,6 +108,11 @@ app.get('/wargame/create', authenticateToken, authorizeMember, (req, res) => {
     res.sendFile(path.join(__dirname, 'public/wargame/create.html'));
 });
 
+// 어드민 레벨 관리 페이지 (관리자 권한 필요)
+app.get('/admin/level-management', authenticateToken, authorizeAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin', 'level-management.html'));
+});
+
 app.get('/admin', authenticateToken, authorizeAdmin, (req, res) => {
     res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
@@ -125,6 +125,7 @@ app.get('/map', (req, res) => { // <-- authenticateToken 제거
 // API 라우트
 app.post('/api/auth/register', authController.register); // 회원가입 (인증 필요 없음)
 app.post('/api/auth/login', authController.login); // 로그인 (인증 필요 없음)
+app.post('/api/auth/refresh-token', authenticateToken, authController.refreshToken); // 토큰 갱신
 
 // 워게임 관련 API (인증 미들웨어 적용)
 app.get('/api/wargames', authenticateToken, wargameController.getProblems); // 문제 목록 조회 (로그인된 사용자면 누구나)
@@ -140,7 +141,25 @@ app.delete('/api/wargames/:problem_id', authenticateToken, authorizeAdmin, warga
 
 // 사용자 위치 저장 API (FormData와 JSON 모두 처리)
 app.post('/api/user/position', authenticateToken, getUploader('uploads/').none(), userController.savePosition);
-app.get('/api/user/me', authenticateToken, userController.getUserInfo); // <-- 새 라우트 추가
+// 사용자 API
+app.get('/api/user/me', authenticateToken, userController.getUserInfo);
+
+// 레벨 시스템 API
+app.post('/api/level/experience', levelController.addExperience); // 내부 API (인증 없음)
+app.get('/api/level/user/:userId', authenticateToken, levelController.getUserLevel);
+
+// 어드민 API (관리자 권한 필요)
+app.get('/api/admin/dashboard/stats', authenticateToken, authorizeAdmin, adminController.getDashboardStats);
+app.get('/api/admin/users', authenticateToken, authorizeAdmin, adminController.getAllUsers);
+app.post('/api/admin/users/adjust-xp', authenticateToken, authorizeAdmin, adminController.adjustUserXP);
+app.post('/api/admin/users/special-title', authenticateToken, authorizeAdmin, adminController.manageSpecialTitle);
+app.get('/api/admin/users/:userId/history', authenticateToken, authorizeAdmin, adminController.getUserXPHistory);
+app.get('/api/admin/titles/settings', authenticateToken, authorizeAdmin, adminController.getTitleSettings);
+app.put('/api/admin/titles/settings', authenticateToken, authorizeAdmin, adminController.updateTitleSettings);
+
+// 공개 랭킹 API (로그인 필요하지만 관리자 권한 불필요)
+app.get('/api/ranking/public', authenticateToken, rankingController.getPublicRanking);
+app.get('/api/ranking/stats', authenticateToken, rankingController.getRankingStats);
 
 // --- 모든 라우트 정의 끝 ---
 
@@ -151,7 +170,6 @@ app.use(express.static('public'));
 // 서버 시작 전 테이블 생성
 db.createTables()
   .then(() => {
-    console.log('Database tables are ready.');
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
@@ -163,5 +181,4 @@ db.createTables()
 
 // DB 연결 테스트
 db.query('SELECT NOW()')
-  .then(res => console.log('Successfully connected to the database!'))
   .catch(err => console.error('Error connecting to the database', err.stack));

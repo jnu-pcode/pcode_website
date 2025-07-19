@@ -144,13 +144,9 @@ function loadImages(images, callback) {
     let loadedImages = 0;
     const totalImages = Object.keys(images).length;
     
-    console.log('이미지 로딩 시작, 총 이미지 수:', totalImages);
-    
     const checkAllLoaded = () => {
         loadedImages++;
-        console.log('이미지 로드됨:', loadedImages, '/', totalImages);
         if (loadedImages === totalImages) {
-            console.log('모든 이미지 로딩 완료');
             callback();
         }
     };
@@ -170,61 +166,61 @@ function loadImages(images, callback) {
 
 // 아바타의 초기 위치 설정 함수
 function setInitialAvatarPosition() {
-    const startTileX = Math.floor(MAP_WIDTH / 2);
-    const startTileY = Math.floor(MAP_HEIGHT / 2);
-    avatarX = startTileX * TILE_SIZE + TILE_SIZE / 2;
-    avatarY = startTileY * TILE_SIZE + TILE_SIZE / 2;
-    targetX = avatarX;
-    targetY = avatarY;
+        const startTileX = Math.floor(MAP_WIDTH / 2);
+        const startTileY = Math.floor(MAP_HEIGHT / 2);
+        avatarX = startTileX * TILE_SIZE + TILE_SIZE / 2;
+        avatarY = startTileY * TILE_SIZE + TILE_SIZE / 2;
+        targetX = avatarX;
+        targetY = avatarY;
 }
 
 // 아바타 이동 처리 함수
 function moveAvatar(dx, dy, speed) {
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < speed) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < speed) {
         avatarX = targetX;
         avatarY = targetY;
-        moveQueue.shift();
-    } else {
-        avatarX += (dx / dist) * speed;
-        avatarY += (dy / dist) * speed;
-    }
+            moveQueue.shift();
+        } else {
+            avatarX += (dx / dist) * speed;
+            avatarY += (dy / dist) * speed;
+        }
 }
 
 // 키보드 입력에 따른 아바타 이동 처리
 function handleKeyboardInput() {
-    const startX = Math.floor(avatarX / TILE_SIZE);
-    const startY = Math.floor(avatarY / TILE_SIZE);
-    let endX = startX;
-    let endY = startY;
+        const startX = Math.floor(avatarX / TILE_SIZE);
+        const startY = Math.floor(avatarY / TILE_SIZE);
+        let endX = startX;
+        let endY = startY;
 
-    if (keys.ArrowUp || keys.w) {
-        endY = startY - 1;
-    } else if (keys.ArrowDown || keys.s) {
-        endY = startY + 1;
-    } else if (keys.ArrowLeft || keys.a) {
-        endX = startX - 1;
-    } else if (keys.ArrowRight || keys.d) {
-        endX = startX + 1;
-    }
-
-    if (endX !== startX || endY !== startY) {
-        const path = findPath(startX, startY, endX, endY, isWalkable);
-        if (path) {
-            moveQueue = path.map(p => {
-                const tile = mapData[p.y][p.x];
+        if (keys.ArrowUp || keys.w) {
+            endY = startY - 1;
+        } else if (keys.ArrowDown || keys.s) {
+            endY = startY + 1;
+        } else if (keys.ArrowLeft || keys.a) {
+            endX = startX - 1;
+        } else if (keys.ArrowRight || keys.d) {
+            endX = startX + 1;
+        }
+        
+        if (endX !== startX || endY !== startY) {
+            const path = findPath(startX, startY, endX, endY, isWalkable);
+            if (path) {
+                moveQueue = path.map(p => {
+                    const tile = mapData[p.y][p.x];
                 let speed = 1; // 기본: 잔디
                 if (tile === 1 || tile === 2) speed = 2.5; // 돌길/도로 빠르게
-                return {
-                    x: p.x * TILE_SIZE + TILE_SIZE / 2,
-                    y: p.y * TILE_SIZE + TILE_SIZE / 2,
-                    speed: speed
-                };
-            });
+                    return {
+                        x: p.x * TILE_SIZE + TILE_SIZE / 2,
+                        y: p.y * TILE_SIZE + TILE_SIZE / 2,
+                        speed: speed
+                    };
+                });
+            }
         }
     }
-}
-
+    
 // 게임 루프: 시간 기반 애니메이션으로 수정 + 성능 최적화
 function gameLoop(currentTime = 0) {
     const deltaTime = currentTime - lastTime;
@@ -236,7 +232,6 @@ function gameLoop(currentTime = 0) {
         currentFps = frameCount;
         frameCount = 0;
         lastFpsUpdate = currentTime;
-        console.log('FPS:', currentFps); // 필요시 주석 해제
     }
     
     // 첫 프레임이나 너무 큰 델타타임은 무시
@@ -275,7 +270,7 @@ function gameLoop(currentTime = 0) {
     // 렌더링 최적화: 카메라가 움직였거나 아바타가 움직였을 때만 다시 그리기
     const cameraChanged = Math.abs(cameraX - lastCameraX) > 0.1 || Math.abs(cameraY - lastCameraY) > 0.1;
     if (cameraChanged || moveQueue.length > 0) {
-        draw();
+    draw();
         lastCameraX = cameraX;
         lastCameraY = cameraY;
     }
@@ -348,7 +343,7 @@ function draw() {
     }
     
     // 아바타 그리기 (anti-aliasing 적용)
-    const avatarSize = 80;
+    const avatarSize = 60;
     const avatarDrawX = avatarX - avatarSize / 2 - cameraX;
     const avatarDrawY = avatarY - avatarSize / 2 - cameraY;
     
@@ -437,16 +432,123 @@ const getUserInfoFromServer = async () => {
             const userData = await response.json();
             return userData.user;
         } else {
-            console.log('사용자 정보를 가져올 수 없습니다:', response.status);
             return null;
         }
     } catch (error) {
-        console.log('사용자 정보 요청 중 오류:', error);
         return null;
     }
 };
 
 let userInfo = null; // 전역 변수로 사용자 정보 저장
+let levelInfo = null; // 사용자 레벨 정보 저장
+
+// 서버에서 사용자 레벨 정보를 가져오는 함수
+const getUserLevelFromServer = async (userId) => {
+    try {
+        const response = await fetch(`/api/level/user/${userId}`, {
+            method: 'GET',
+            credentials: 'include' // 쿠키 포함
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.levelInfo;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        return null;
+    }
+};
+
+// 레벨 UI 업데이트 함수
+const updateLevelUI = (levelData) => {
+    if (!levelData) return;
+    
+    const levelNumber = document.getElementById('levelNumber');
+    const levelTitle = document.getElementById('levelTitle');
+    const specialTitle = document.getElementById('specialTitle');
+    const xpFill = document.getElementById('xpFill');
+    const currentXP = document.getElementById('currentXP');
+    const maxXP = document.getElementById('maxXP');
+    
+    levelNumber.textContent = `Lv.${levelData.level}`;
+    levelTitle.textContent = levelData.title || '새싹';
+    
+    // 특별 칭호 업데이트
+    if (levelData.special_title) {
+        specialTitle.textContent = levelData.special_title;
+        specialTitle.style.display = 'inline-block';
+    } else {
+        specialTitle.textContent = '';
+        specialTitle.style.display = 'none';
+    }
+    
+    const progress = levelData.progressPercent || 0;
+    xpFill.style.width = `${progress}%`;
+    
+    currentXP.textContent = `${levelData.currentLevelXP || 0} XP`;
+    maxXP.textContent = `${levelData.requiredForNext || 1000} XP`;
+};
+
+// 레벨업 애니메이션 함수
+const showLevelUpAnimation = (newLevel, newTitle) => {
+    // 기존 애니메이션이 있다면 제거
+    const existingAnimation = document.querySelector('.levelup-animation');
+    if (existingAnimation) {
+        existingAnimation.remove();
+    }
+    
+    // 레벨업 애니메이션 요소 생성
+    const animation = document.createElement('div');
+    animation.className = 'levelup-animation';
+    animation.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.5);
+            z-index: 1000;
+            animation: levelUpPulse 2s ease-in-out;
+        ">
+            🎉 LEVEL UP! 🎉<br>
+            <div style="font-size: 32px; margin: 10px 0;">Lv.${newLevel}</div>
+            <div style="font-size: 16px; color: #666;">새로운 칭호: ${newTitle}</div>
+        </div>
+    `;
+    
+    // 애니메이션 CSS 추가
+    if (!document.querySelector('#levelup-styles')) {
+        const style = document.createElement('style');
+        style.id = 'levelup-styles';
+        style.textContent = `
+            @keyframes levelUpPulse {
+                0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+                20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+                80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(animation);
+    
+    // 2초 후 애니메이션 제거
+    setTimeout(() => {
+        if (animation.parentNode) {
+            animation.parentNode.removeChild(animation);
+        }
+    }, 2000);
+};
 
 // JWT 토큰을 쿠키에서 가져오는 함수 (httpOnly 쿠키로는 접근 불가능하므로 사용하지 않음)
 // function getTokenFromCookies() {
@@ -478,12 +580,8 @@ const saveAvatarPosition = async () => {
         // 위치 저장 응답 상태
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('위치 저장 실패:', errorData.message);
-        } else {
-            console.log('위치 저장 성공');
         }
     } catch (error) {
-        console.error('위치 저장 중 오류 발생:', error);
     }
 };
 
@@ -501,24 +599,24 @@ window.addEventListener('beforeunload', (event) => {
 // E 키 상호작용 시 위치 저장 후 페이지 이동
 window.addEventListener('keydown', async (event) => {
     if (event.key === 'e' || event.key === 'E') {
-        const nearby = getNearbyInteractableTile();
-        if (nearby) {
-            if (!userInfo) { // 로그인하지 않은 경우
-                window.location.href = '/login?message=' + encodeURIComponent('이 기능은 로그인이 필요합니다.');
-                return;
-            }
+                const nearby = getNearbyInteractableTile();
+                if (nearby) {
+                    if (!userInfo) { // 로그인하지 않은 경우
+                        window.location.href = '/login?message=' + encodeURIComponent('이 기능은 로그인이 필요합니다.');
+                        return;
+                    }
             if (nearby.type === 4) { // 워게임센터
                 await saveAvatarPosition(); // 페이지 이동 전 위치 저장
-                window.location.href = '/wargame';
+                        window.location.href = '/wargame';
             } else if (nearby.type === 3) { // 집
-                if (!userInfo.is_member) {
-                    window.location.href = '/login?message=' + encodeURIComponent('이곳은 동아리원만 입장할 수 있습니다.');
-                    return;
-                }
+                        if (!userInfo.is_member) {
+                            window.location.href = '/login?message=' + encodeURIComponent('이곳은 동아리원만 입장할 수 있습니다.');
+                            return;
+                        }
                 await saveAvatarPosition(); // 페이지 이동 전 위치 저장
-                // 추후 개인 집 페이지로 이동 로직 추가
-            }
-        }
+                        // 추후 개인 집 페이지로 이동 로직 추가
+                    }
+                }
     }
 });
 
@@ -568,11 +666,20 @@ function setupEventListeners() {
 
 // 초기화 함수
 async function initializeGame() {
-    console.log('게임 초기화 시작');
     
     try {
         userInfo = await getUserInfoFromServer(); // 서버에서 사용자 정보 가져오기
-        console.log('사용자 정보:', userInfo);
+
+        // 사용자가 로그인한 경우 레벨 정보도 가져오기
+        const userId = userInfo?.id || userInfo?.userId; // id 또는 userId 둘 다 체크
+        if (userInfo && userId) {
+            levelInfo = await getUserLevelFromServer(userId);
+            updateLevelUI(levelInfo);
+            
+            // 관리자 버튼 및 특별 칭호 표시
+            await checkAndShowAdminButton();
+
+        }
 
         if (userInfo && userInfo.x_position !== undefined && userInfo.y_position !== undefined) {
             // 저장된 위치가 있으면 해당 위치로 아바타 설정
@@ -580,19 +687,15 @@ async function initializeGame() {
             avatarY = userInfo.y_position;
             targetX = userInfo.x_position;
             targetY = userInfo.y_position;
-            console.log('저장된 위치로 설정:', avatarX, avatarY);
         } else {
             // 저장된 위치가 없거나 로그인하지 않은 경우 기본 위치 (맵 중앙 근처)
             setInitialAvatarPosition();
-            console.log('기본 위치로 설정:', avatarX, avatarY);
         }
 
         setupEventListeners();
-        console.log('이벤트 리스너 설정 완료');
 
         // 이미지 로딩 후 게임 시작
         loadImages({...tileImages, ...objectImages, avatarImage}, () => {
-            console.log('게임 루프 시작');
             gameLoop();
         });
     } catch (error) {
@@ -600,8 +703,161 @@ async function initializeGame() {
     }
 }
 
+// 레벨 정보 강제 새로고침 함수
+const refreshLevelInfo = async () => {
+    const userId = userInfo?.id || userInfo?.userId; // id 또는 userId 둘 다 체크
+    if (userInfo && userId) {
+        const updatedLevelInfo = await getUserLevelFromServer(userId);
+        if (updatedLevelInfo) {
+            // 레벨업이 발생했는지 확인 (첫 로드가 아닌 경우에만)
+            if (levelInfo && updatedLevelInfo.level > levelInfo.level) {
+                showLevelUpAnimation(updatedLevelInfo.level, updatedLevelInfo.title);
+            }
+            
+            // 경험치가 변경되었는지 확인 (워게임에서 경험치를 얻었는지)
+            if (levelInfo && updatedLevelInfo.totalExperience > levelInfo.totalExperience) {
+                const gainedXP = updatedLevelInfo.totalExperience - levelInfo.totalExperience;
+                
+                // 경험치 획득 알림 (작은 팝업)
+                showXPGainNotification(gainedXP);
+            }
+            
+            levelInfo = updatedLevelInfo;
+            updateLevelUI(levelInfo);
+            
+            // 특별 칭호 업데이트를 위해 관리자 정보도 다시 확인
+            if (!updatedLevelInfo.special_title) {
+                await checkAndShowAdminButton();
+            }
+        }
+    }
+};
+
+// 페이지가 다시 포커스될 때 (다른 탭에서 돌아올 때) 레벨 정보 새로고침
+window.addEventListener('focus', refreshLevelInfo);
+
+// 페이지가 보여질 때도 레벨 정보 새로고침 (모바일 등에서 focus 이벤트가 안 될 수 있음)
+window.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        refreshLevelInfo();
+    }
+});
+
+
+
+// 경험치 획득 알림 함수
+const showXPGainNotification = (gainedXP) => {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: linear-gradient(135deg, #4CAF50, #8BC34A);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-weight: bold;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        animation: slideIn 0.5s ease-out;
+    `;
+    notification.textContent = `+${gainedXP} XP 획득!`;
+    
+    // 애니메이션 CSS 추가
+    if (!document.querySelector('#xp-notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'xp-notification-styles';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(notification);
+    
+    // 3초 후 사라지는 애니메이션
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.5s ease-in';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 500);
+    }, 3000);
+};
+
+// 관리자 버튼 표시 함수
+const checkAndShowAdminButton = async () => {
+    try {
+        const response = await fetch('/api/user/me', {
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const userInfo = data.user;
+            
+            // 관리자 버튼 표시
+            if (userInfo && userInfo.is_admin) {
+                document.getElementById('adminAccess').style.display = 'block';
+            } else {
+                document.getElementById('adminAccess').style.display = 'none';
+            }
+
+            // 특별 칭호 표시 (레벨 UI에서 이미 설정되지 않은 경우에만)
+            const specialTitleElement = document.getElementById('specialTitle');
+            if (specialTitleElement && userInfo && userInfo.special_title && !specialTitleElement.textContent) {
+                specialTitleElement.textContent = userInfo.special_title;
+                specialTitleElement.style.display = 'inline-block';
+            }
+        }
+    } catch (error) {
+        console.error('관리자 권한 확인 오류:', error);
+    }
+};
+
+// 토큰 갱신 함수 (특별 칭호 변경 시 호출)
+const refreshTokenAndUpdateUI = async () => {
+    try {
+        const response = await fetch('/api/auth/refresh-token', {
+            method: 'POST',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // UI 업데이트
+            await checkAndShowAdminButton();
+            
+            const userId = data.user.id;
+            if (userId) {
+                const levelInfo = await getUserLevelFromServer(userId);
+                if (levelInfo) {
+                    updateLevelUI(levelInfo);
+                }
+            }
+            
+            return true;
+        } else {
+            console.error('토큰 갱신 실패:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('토큰 갱신 오류:', error);
+        return false;
+    }
+};
+
 // 게임 시작 (DOMContentLoaded 이벤트에서 호출)
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOM 로드 완료, 게임 초기화 시작');
     await initializeGame();
+    // 초기화에서 이미 checkAndShowAdminButton을 호출하므로 중복 호출 방지
 });

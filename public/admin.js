@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 모든 fetch 요청에 JWT 토큰을 자동으로 추가하는 함수
     const authorizedFetch = async (url, options = {}) => {
         const token = getTokenFromCookies();
-        console.log('authorizedFetch: 토큰 가져옴 ->', token ? '존재함' : '없음'); // <-- 이 줄 추가
 
         const headers = {
             'Content-Type': 'application/json',
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ...(token && { 'Authorization': `Bearer ${token}` }), // <-- 토큰이 있을 때만 헤더 추가
             ...options.headers
         };
-        console.log('authorizedFetch: 요청 헤더 ->', headers); // <-- 이 줄 추가
 
         try {
             const response = await fetch(url, { ...options, headers });

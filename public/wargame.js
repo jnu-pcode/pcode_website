@@ -62,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
             button.textContent = '실행 중...';
 
             const response = await fetch(`/api/wargames/${problemId}/start`, {
-                method: 'POST'
+                method: 'POST',
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -96,24 +97,31 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const stopProblem = async (containerId, button) => {
+        // containerId 유효성 검사
+        if (!containerId || containerId === 'undefined' || containerId === '') {
+            console.error('유효하지 않은 container ID:', containerId);
+            console.warn('컨테이너 ID가 유효하지 않습니다. 자동으로 페이지를 새로고침합니다.');
+            return;
+        }
+
         try {
             button.disabled = true;
             button.textContent = '종료 중...';
 
             const response = await fetch(`/api/wargames/stop/${containerId}`, {
-                method: 'POST'
+                method: 'POST',
+                credentials: 'include'
             });
 
             if (!response.ok) {
-                throw new Error('문제 종료 실패');
+                const errorData = await response.json().catch(() => ({ message: '알 수 없는 오류' }));
+                throw new Error(`문제 종료 실패: ${errorData.message}`);
             }
-
-            alert('문제가 성공적으로 종료되었습니다.');
-            
             button.textContent = '문제 시작';
             button.disabled = false;
             button.classList.add('start-btn');
             button.classList.remove('stop-btn');
+            delete button.dataset.containerId; // 완전히 제거
 
             const listItem = button.closest('li');
             const form = listItem.querySelector('.flag-submit-form');
@@ -122,8 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } catch (error) {
-            alert('문제 종료에 실패했습니다. 서버 로그를 확인하세요.');
-            console.error('Error:', error);
+            console.error('컨테이너 종료 오류:', error);
+            console.warn('문제 종료에 실패했습니다. 서버 로그를 확인하세요.');
             button.textContent = '문제 종료';
             button.disabled = false;
         }
@@ -136,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const response = await fetch(`/api/wargames/${problemId}/submit`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -143,16 +152,34 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             const data = await response.json();
+            
+            // 레벨업이 발생한 경우 특별 알림 표시
+            if (data.levelUp) {
+                alert(`🎉 ${data.message}\n\n🆙 레벨업! ${data.newLevel}레벨이 되었습니다!\n🏆 새로운 칭호: ${data.newTitle}`);
+            } else {
             alert(data.message);
+            }
             
             button.disabled = false;
             button.textContent = '제출';
 
             if (response.ok) {
-                const startButton = button.closest('li').querySelector('.stop-btn');
-                if (startButton) {
-                    stopProblem(startButton.dataset.containerId, startButton);
+                const listItem = button.closest('li');
+                
+                // 여러 방법으로 stop 버튼 찾기
+                let stopButton = listItem.querySelector('.stop-btn');
+                if (!stopButton) {
+                    // class가 변경되었을 수도 있으니 data-container-id로도 찾아보기
+                    stopButton = listItem.querySelector('[data-container-id]:not([data-container-id=""])');
                 }
+                
+                if (stopButton && stopButton.dataset.containerId && stopButton.dataset.containerId !== 'undefined') {
+                    stopProblem(stopButton.dataset.containerId, stopButton);
+                } else {
+                    console.warn('Stop button을 찾을 수 없거나 container ID가 유효하지 않습니다.');
+                }
+                
+                // 즉시 페이지 새로고침
                 window.location.reload();
             }
 
